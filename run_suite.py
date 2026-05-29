@@ -51,7 +51,7 @@ def run_pcd_general_science_suite():
         distance_records.append(biophysics_pipeline.spatial_distance)
         energy_records.append(biophysics_pipeline.binding_affinity_delta_g)
         
-        # Build mock training feature rows dynamically using calculated variables
+        # Structure stabilized training vectors
         training_features.append([0.01 * (step+1), 6.25 * (step+1), 5.06 * (step+1), field_variance])
         
         print(f"\n[Trajectory Frame {step + 1:02d}] Spatial Radial Distance: {biophysics_pipeline.spatial_distance:6.3f} Å")
@@ -59,26 +59,24 @@ def run_pcd_general_science_suite():
         print(f" -> Affinity Metric: ΔG = {biophysics_pipeline.binding_affinity_delta_g:8.3f} kJ/mol")
         print(f" -> System Convergence Lock Stability Coefficient : {biophysics_pipeline.pocket_lock_stability * 100:5.1f}%")
 
-    # Fix escape sequence warnings via raw strings
     PCDDataVisualizer.generate_report_plots(curvature_records, distance_records, energy_records)
 
     print("\n" + " - " * 27 + "\n")
 
-    # SYSTEM 3: LIVE NEURAL NETWORK OPTIMIZATION LOOP
+    # SYSTEM 3: NEURAL NETWORK PREDICTOR INTEGRATION LAYER
     print("=" * 80)
     print("     LAUNCHING PCD NEURAL NETWORK PREDICTOR INTEGRATION LAYER")
     print("=" * 80)
     
-    # Instantiate neural network, loss optimizer, and input tensors
     model = PCDAffinityPredictorNet()
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.1)
+    optimizer = optim.Adam(model.parameters(), lr=0.01) # Swapped to Adam for adaptive learning momentum
     
     X = torch.tensor(training_features, dtype=torch.float32)
-    y = torch.tensor([[0.35], [0.60], [0.55], [0.50]], dtype=torch.float32) # Historical targets
+    y = torch.tensor([[0.35], [0.60], [0.55], [0.50]], dtype=torch.float32)
     
     print(" -> Commencing network weight backpropagation routine...")
-    for epoch in range(100):
+    for epoch in range(1000):
         optimizer.zero_grad()
         predictions = model(X)
         loss = criterion(predictions, y)
