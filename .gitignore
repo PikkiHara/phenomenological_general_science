@@ -1,1 +1,11 @@
-__pycache__/\n*.egg-info/\n.config/\nsample_data/\n
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+
+# Local runtime analytics and logs
+pcd_runtime_analytics.png
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
