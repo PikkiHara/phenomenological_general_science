@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: pcd_green_ai
+Version: 1.1.0
+Summary: Phenomenological Computational Dynamics (PCD) multi-dimensional hardware-software metric space engine.
+Home-page: https://github.com/PikkiHara/phenomenological_general_science
+Author: Hara
+Author-email: hara@domain.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: torch>=2.0.0
+
+# Phenomenological Computational Dynamics (PCD)\nUnified Green-AI Core and Biophysics Pipeline.\n
