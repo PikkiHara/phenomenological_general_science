@@ -14,6 +14,7 @@ from pcd_green_ai.models import PCDAffinityPredictorNet
 from pcd_green_ai.physics_engine import PCDPhysicsCore
 from pcd_green_ai.advanced_geometry import HyperbolicManifoldEmbeddingEngine
 from pcd_green_ai.concurrency import PCDDistributedPipelineManager
+from pcd_green_ai.rl_engine import PCDActorCriticAgent
 
 def run_pcd_general_science_suite():
     print("=" * 80)
@@ -24,8 +25,8 @@ def run_pcd_general_science_suite():
     biophysics_pipeline = UnifiedDockingPipeline()
     hyperbolic_engine = HyperbolicManifoldEmbeddingEngine(input_dim=3, embedding_dim=16)
     concurrency_manager = PCDDistributedPipelineManager(max_workers=2)
+    rl_agent = PCDActorCriticAgent(state_dim=4, action_dim=3)
     
-    # Define functional tasks for concurrent execution routing
     def hardware_routine():
         hardware_tracer = EmpiricalManifoldTracer()
         hardware_tracer.profile_active_environment()
@@ -50,13 +51,12 @@ def run_pcd_general_science_suite():
     calculated_r_scalar = physics_engine.compute_ricci_tensor_approximation(mock_metric_03)
     hyp_embeddings, centroid, adaptive_c = hyperbolic_engine(mock_receptor_atoms, calculated_r_scalar)
     print(f" -> Computed Adaptive Hyperbolic Manifold Curvature (c): {adaptive_c:.6f}")
-    print(f" -> Generated Hyperbolic Centroid Coordinates:\n{centroid.detach().numpy()[0][:4]} ... [Truncated]")
     
     print("\n" + " - " * 27 + "\n")
     
-    # SYSTEM 3: MOLECULAR BIOPHYSICS DOCKING PIPELINE WITH INTERLOCKING COUPLING
+    # SYSTEM 3: AUTONOMOUS POLICY-DRIVEN MOLECULAR DYNAMICS
     print("=" * 80)
-    print("     EXECUTING COUPLED RECEPTOR-LIGAND DYNAMICS")
+    print("     EXECUTING ADAPTIVE ACTOR-CRITIC TRAJECTORY TRACKING")
     print("=" * 80)
     
     spatial_milestones = [15.0, 7.5, 3.8, 1.1]
@@ -67,8 +67,8 @@ def run_pcd_general_science_suite():
     for step, offset in enumerate(spatial_milestones):
         damping_factor = 1.0 / math.log(max(math.e, calculated_r_scalar))
         coupled_noise = torch.randn(25, 3) * damping_factor
-        
         mock_ligand_atoms = coupled_noise + torch.tensor([offset, 0.0, 0.0])
+        
         field_variance, operational_mode = biophysics_pipeline.calculate_interaction_field(
             mock_ligand_atoms, mock_receptor_atoms
         )
@@ -77,11 +77,19 @@ def run_pcd_general_science_suite():
             biophysics_pipeline.spatial_distance, field_variance
         )
         
+        # Build state tensor to inform the Actor-Critic agent
+        state_vector = torch.tensor([[thermo["enthalpy_dh"], thermo["entropic_penalty_tds"], calculated_r_scalar, field_variance]], dtype=torch.float32)
+        
+        # Pass through RL Engine
+        action_stride, state_value = rl_agent(state_vector)
+        
         distance_records.append(biophysics_pipeline.spatial_distance)
         energy_records.append(thermo["free_energy_dg"])
         training_features.append([thermo["enthalpy_dh"], thermo["entropic_penalty_tds"], calculated_r_scalar, field_variance])
         
-        print(f"[Trajectory Frame {step + 1:02d}] Spatial Distance: {biophysics_pipeline.spatial_distance:6.3f} Å | Mode: {operational_mode}")
+        print(f"\n[Agent Step {step + 1:02d}] Spatial Distance: {biophysics_pipeline.spatial_distance:6.3f} Å")
+        print(f" -> Evaluated State Value V(s)     : {state_value.item():.4f}")
+        print(f" -> Policy Stride Modification Vector: {action_stride.detach().numpy()[0]}")
 
     PCDDataVisualizer.generate_report_plots([5.9650, 16.6161, calculated_r_scalar], distance_records, energy_records)
 
