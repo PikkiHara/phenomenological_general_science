@@ -12,6 +12,7 @@ from pcd_green_ai.biophysics import UnifiedDockingPipeline
 from pcd_green_ai.visualizer import PCDDataVisualizer
 from pcd_green_ai.models import PCDAffinityPredictorNet
 from pcd_green_ai.physics_engine import PCDPhysicsCore
+from pcd_green_ai.advanced_geometry import HyperbolicManifoldEmbeddingEngine
 
 def run_pcd_general_science_suite():
     print("=" * 80)
@@ -20,6 +21,7 @@ def run_pcd_general_science_suite():
     
     physics_engine = PCDPhysicsCore()
     biophysics_pipeline = UnifiedDockingPipeline()
+    hyperbolic_engine = HyperbolicManifoldEmbeddingEngine(input_dim=3, embedding_dim=16)
     
     # SYSTEM 1: HARDWARE TELEMETRY MANIFOLD ENGINE
     print("\n[Executing Geometric Physics Calculations]")
@@ -32,9 +34,9 @@ def run_pcd_general_science_suite():
     
     print("\n" + " - " * 27 + "\n")
     
-    # SYSTEM 2: MOLECULAR BIOPHYSICS DOCKING PIPELINE WITH INTERLOCKING COUPLING
+    # SYSTEM 2: ADVANCED GEOMETRIC HYPERBOLIC EMBEDDING CORE
     print("=" * 80)
-    print("     EXECUTING COUPLED RECEPTOR-LIGAND DYNAMICS")
+    print("     EXECUTING NON-EUCLIDEAN HYPERBOLIC GRAPH SPACE PROJECTIONS")
     print("=" * 80)
     
     pdb_path = "target_protein.pdb"
@@ -43,6 +45,19 @@ def run_pcd_general_science_suite():
     except Exception as e:
         print(f" ❌ Critical Core Loader Failure: {e}")
         return
+        
+    print(f" -> Injecting {mock_receptor_atoms.shape[0]} atomic coordinate tensors into Poincaré disk...")
+    hyp_embeddings, centroid, adaptive_c = hyperbolic_engine(mock_receptor_atoms, calculated_r_scalar)
+    print(f" -> Computed Adaptive Hyperbolic Manifold Curvature (c): {adaptive_c:.6f}")
+    print(f" -> Output Poincaré Space Embedding Tensor Matrix Shape : {hyp_embeddings.shape}")
+    print(f" -> Generated Hyperbolic Centroid Coordinates:\n{centroid.detach().numpy()}")
+    
+    print("\n" + " - " * 27 + "\n")
+    
+    # SYSTEM 3: MOLECULAR BIOPHYSICS DOCKING PIPELINE WITH INTERLOCKING COUPLING
+    print("=" * 80)
+    print("     EXECUTING COUPLED RECEPTOR-LIGAND DYNAMICS")
+    print("=" * 80)
     
     spatial_milestones = [15.0, 7.5, 3.8, 1.1]
     distance_records = []
@@ -50,7 +65,6 @@ def run_pcd_general_science_suite():
     training_features = []
     
     for step, offset in enumerate(spatial_milestones):
-        # DYNAMIC COUPLING: Curvature R scales down the step variance to throttle load
         damping_factor = 1.0 / math.log(max(math.e, calculated_r_scalar))
         coupled_noise = torch.randn(25, 3) * damping_factor
         
@@ -70,15 +84,13 @@ def run_pcd_general_science_suite():
         
         print(f"\n[Trajectory Frame {step + 1:02d}] Spatial Distance: {biophysics_pipeline.spatial_distance:6.3f} Å")
         print(f" -> Manifold Damping Factor (κ): {damping_factor:.4f}")
-        print(f" -> Enthalpy (ΔH)    : {thermo['enthalpy_dh']:8.3f} kJ/mol")
-        print(f" -> Entropic Penalty : {thermo['entropic_penalty_tds']:8.3f} kJ/mol")
         print(f" -> Combined Field ΔG: {thermo['free_energy_dg']:8.3f} kJ/mol | Mode: {operational_mode}")
 
     PCDDataVisualizer.generate_report_plots([5.9650, 16.6161, calculated_r_scalar], distance_records, energy_records)
 
     print("\n" + " - " * 27 + "\n")
 
-    # SYSTEM 3: NEURAL NETWORK PREDICTOR INTEGRATION LAYER
+    # SYSTEM 4: NEURAL NETWORK PREDICTOR INTEGRATION LAYER
     print("=" * 80)
     print("     LAUNCHING PCD NEURAL NETWORK PREDICTOR INTEGRATION LAYER")
     print("=" * 80)
