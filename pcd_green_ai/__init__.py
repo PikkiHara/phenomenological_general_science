@@ -5,3 +5,4 @@ from .manifold import MultiDimensionalManifoldEngine
 from .tracer import EmpiricalManifoldTracer
 from .visualizer import PCDDataVisualizer
 from .models import PCDAffinityPredictorNet
+from .physics_engine import PCDPhysicsCore
