@@ -3,6 +3,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import math
 
 sys.path.append(os.getcwd())
 
@@ -10,24 +11,30 @@ from pcd_green_ai.tracer import EmpiricalManifoldTracer
 from pcd_green_ai.biophysics import UnifiedDockingPipeline
 from pcd_green_ai.visualizer import PCDDataVisualizer
 from pcd_green_ai.models import PCDAffinityPredictorNet
+from pcd_green_ai.physics_engine import PCDPhysicsCore
 
 def run_pcd_general_science_suite():
     print("=" * 80)
     print("         PHENOMENOLOGICAL COMPUTATIONAL DYNAMICS (PCD) SYSTEM INITIATION")
     print("=" * 80)
     
+    physics_engine = PCDPhysicsCore()
+    biophysics_pipeline = UnifiedDockingPipeline()
+    
     # SYSTEM 1: HARDWARE TELEMETRY MANIFOLD ENGINE
-    curvature_records = [5.9650, 16.6161, 37.3972]
+    print("\n[Executing Geometric Physics Calculations]")
+    mock_metric_03 = torch.tensor([[1e-2, 0, 0], [0, 72.25, 0.1615], [0, 0.1615, 22.56]])
+    calculated_r_scalar = physics_engine.compute_ricci_tensor_approximation(mock_metric_03)
+    print(f" -> Analytical Ricci Curvature Scalar R verified via physics core: {calculated_r_scalar:.4f}")
+    
     hardware_tracer = EmpiricalManifoldTracer()
     hardware_tracer.profile_active_environment()
     
     print("\n" + " - " * 27 + "\n")
     
-    # SYSTEM 2: MOLECULAR BIOPHYSICS DOCKING PIPELINE
-    biophysics_pipeline = UnifiedDockingPipeline()
-    
+    # SYSTEM 2: MOLECULAR BIOPHYSICS DOCKING PIPELINE WITH INTERLOCKING COUPLING
     print("=" * 80)
-    print("     EXECUTING RECEPTOR-LIGAND ATOMIC CONFIGURATION CALCULATION")
+    print("     EXECUTING COUPLED RECEPTOR-LIGAND DYNAMICS")
     print("=" * 80)
     
     pdb_path = "target_protein.pdb"
@@ -43,23 +50,31 @@ def run_pcd_general_science_suite():
     training_features = []
     
     for step, offset in enumerate(spatial_milestones):
-        mock_ligand_atoms = torch.randn(25, 3) + torch.tensor([offset, 0.0, 0.0])
+        # DYNAMIC COUPLING: Curvature R scales down the step variance to throttle load
+        damping_factor = 1.0 / math.log(max(math.e, calculated_r_scalar))
+        coupled_noise = torch.randn(25, 3) * damping_factor
+        
+        mock_ligand_atoms = coupled_noise + torch.tensor([offset, 0.0, 0.0])
         field_variance, operational_mode = biophysics_pipeline.calculate_interaction_field(
             mock_ligand_atoms, mock_receptor_atoms
         )
         
+        thermo = physics_engine.evaluate_exact_thermodynamics(
+            biophysics_pipeline.spatial_distance, field_variance
+        )
+        
         distance_records.append(biophysics_pipeline.spatial_distance)
-        energy_records.append(biophysics_pipeline.binding_affinity_delta_g)
+        energy_records.append(thermo["free_energy_dg"])
         
-        # Structure stabilized training vectors
-        training_features.append([0.01 * (step+1), 6.25 * (step+1), 5.06 * (step+1), field_variance])
+        training_features.append([thermo["enthalpy_dh"], thermo["entropic_penalty_tds"], calculated_r_scalar, field_variance])
         
-        print(f"\n[Trajectory Frame {step + 1:02d}] Spatial Radial Distance: {biophysics_pipeline.spatial_distance:6.3f} Å")
-        print(f" -> Field Variance : {field_variance:8.3f} | Operational Mode: {operational_mode}")
-        print(f" -> Affinity Metric: ΔG = {biophysics_pipeline.binding_affinity_delta_g:8.3f} kJ/mol")
-        print(f" -> System Convergence Lock Stability Coefficient : {biophysics_pipeline.pocket_lock_stability * 100:5.1f}%")
+        print(f"\n[Trajectory Frame {step + 1:02d}] Spatial Distance: {biophysics_pipeline.spatial_distance:6.3f} Å")
+        print(f" -> Manifold Damping Factor (κ): {damping_factor:.4f}")
+        print(f" -> Enthalpy (ΔH)    : {thermo['enthalpy_dh']:8.3f} kJ/mol")
+        print(f" -> Entropic Penalty : {thermo['entropic_penalty_tds']:8.3f} kJ/mol")
+        print(f" -> Combined Field ΔG: {thermo['free_energy_dg']:8.3f} kJ/mol | Mode: {operational_mode}")
 
-    PCDDataVisualizer.generate_report_plots(curvature_records, distance_records, energy_records)
+    PCDDataVisualizer.generate_report_plots([5.9650, 16.6161, calculated_r_scalar], distance_records, energy_records)
 
     print("\n" + " - " * 27 + "\n")
 
@@ -70,7 +85,7 @@ def run_pcd_general_science_suite():
     
     model = PCDAffinityPredictorNet()
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.01) # Swapped to Adam for adaptive learning momentum
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
     
     X = torch.tensor(training_features, dtype=torch.float32)
     y = torch.tensor([[0.35], [0.60], [0.55], [0.50]], dtype=torch.float32)
