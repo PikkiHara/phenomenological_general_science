@@ -7,3 +7,4 @@ from .visualizer import PCDDataVisualizer
 from .models import PCDAffinityPredictorNet
 from .physics_engine import PCDPhysicsCore
 from .advanced_geometry import HyperbolicManifoldEmbeddingEngine
+from .concurrency import PCDDistributedPipelineManager

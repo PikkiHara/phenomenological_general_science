@@ -13,6 +13,7 @@ from pcd_green_ai.visualizer import PCDDataVisualizer
 from pcd_green_ai.models import PCDAffinityPredictorNet
 from pcd_green_ai.physics_engine import PCDPhysicsCore
 from pcd_green_ai.advanced_geometry import HyperbolicManifoldEmbeddingEngine
+from pcd_green_ai.concurrency import PCDDistributedPipelineManager
 
 def run_pcd_general_science_suite():
     print("=" * 80)
@@ -22,15 +23,22 @@ def run_pcd_general_science_suite():
     physics_engine = PCDPhysicsCore()
     biophysics_pipeline = UnifiedDockingPipeline()
     hyperbolic_engine = HyperbolicManifoldEmbeddingEngine(input_dim=3, embedding_dim=16)
+    concurrency_manager = PCDDistributedPipelineManager(max_workers=2)
     
-    # SYSTEM 1: HARDWARE TELEMETRY MANIFOLD ENGINE
-    print("\n[Executing Geometric Physics Calculations]")
-    mock_metric_03 = torch.tensor([[1e-2, 0, 0], [0, 72.25, 0.1615], [0, 0.1615, 22.56]])
-    calculated_r_scalar = physics_engine.compute_ricci_tensor_approximation(mock_metric_03)
-    print(f" -> Analytical Ricci Curvature Scalar R verified via physics core: {calculated_r_scalar:.4f}")
-    
-    hardware_tracer = EmpiricalManifoldTracer()
-    hardware_tracer.profile_active_environment()
+    # Define functional tasks for concurrent execution routing
+    def hardware_routine():
+        hardware_tracer = EmpiricalManifoldTracer()
+        hardware_tracer.profile_active_environment()
+        return torch.tensor([[1e-2, 0, 0], [0, 72.25, 0.1615], [0, 0.1615, 22.56]])
+
+    def biophysics_pre_load():
+        pdb_path = "target_protein.pdb"
+        return biophysics_pipeline.parse_pdb_coordinates(pdb_path)
+
+    # SYSTEM 1: CONCURRENT WORKLOAD PARALLELIZATION
+    mock_metric_03, mock_receptor_atoms = concurrency_manager.dispatch_parallel_tasks(
+        hardware_routine, biophysics_pre_load
+    )
     
     print("\n" + " - " * 27 + "\n")
     
@@ -39,18 +47,10 @@ def run_pcd_general_science_suite():
     print("     EXECUTING NON-EUCLIDEAN HYPERBOLIC GRAPH SPACE PROJECTIONS")
     print("=" * 80)
     
-    pdb_path = "target_protein.pdb"
-    try:
-        mock_receptor_atoms = biophysics_pipeline.parse_pdb_coordinates(pdb_path)
-    except Exception as e:
-        print(f" ❌ Critical Core Loader Failure: {e}")
-        return
-        
-    print(f" -> Injecting {mock_receptor_atoms.shape[0]} atomic coordinate tensors into Poincaré disk...")
+    calculated_r_scalar = physics_engine.compute_ricci_tensor_approximation(mock_metric_03)
     hyp_embeddings, centroid, adaptive_c = hyperbolic_engine(mock_receptor_atoms, calculated_r_scalar)
     print(f" -> Computed Adaptive Hyperbolic Manifold Curvature (c): {adaptive_c:.6f}")
-    print(f" -> Output Poincaré Space Embedding Tensor Matrix Shape : {hyp_embeddings.shape}")
-    print(f" -> Generated Hyperbolic Centroid Coordinates:\n{centroid.detach().numpy()}")
+    print(f" -> Generated Hyperbolic Centroid Coordinates:\n{centroid.detach().numpy()[0][:4]} ... [Truncated]")
     
     print("\n" + " - " * 27 + "\n")
     
@@ -79,12 +79,9 @@ def run_pcd_general_science_suite():
         
         distance_records.append(biophysics_pipeline.spatial_distance)
         energy_records.append(thermo["free_energy_dg"])
-        
         training_features.append([thermo["enthalpy_dh"], thermo["entropic_penalty_tds"], calculated_r_scalar, field_variance])
         
-        print(f"\n[Trajectory Frame {step + 1:02d}] Spatial Distance: {biophysics_pipeline.spatial_distance:6.3f} Å")
-        print(f" -> Manifold Damping Factor (κ): {damping_factor:.4f}")
-        print(f" -> Combined Field ΔG: {thermo['free_energy_dg']:8.3f} kJ/mol | Mode: {operational_mode}")
+        print(f"[Trajectory Frame {step + 1:02d}] Spatial Distance: {biophysics_pipeline.spatial_distance:6.3f} Å | Mode: {operational_mode}")
 
     PCDDataVisualizer.generate_report_plots([5.9650, 16.6161, calculated_r_scalar], distance_records, energy_records)
 
@@ -102,7 +99,6 @@ def run_pcd_general_science_suite():
     X = torch.tensor(training_features, dtype=torch.float32)
     y = torch.tensor([[0.35], [0.60], [0.55], [0.50]], dtype=torch.float32)
     
-    print(" -> Commencing network weight backpropagation routine...")
     for epoch in range(1000):
         optimizer.zero_grad()
         predictions = model(X)
