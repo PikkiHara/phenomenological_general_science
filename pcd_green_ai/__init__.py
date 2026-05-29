@@ -4,3 +4,4 @@ from .biophysics import UnifiedDockingPipeline
 from .manifold import MultiDimensionalManifoldEngine
 from .tracer import EmpiricalManifoldTracer
 from .visualizer import PCDDataVisualizer
+from .models import PCDAffinityPredictorNet

@@ -1,12 +1,15 @@
 import sys
 import os
 import torch
+import torch.nn as nn
+import torch.optim as optim
 
 sys.path.append(os.getcwd())
 
 from pcd_green_ai.tracer import EmpiricalManifoldTracer
 from pcd_green_ai.biophysics import UnifiedDockingPipeline
 from pcd_green_ai.visualizer import PCDDataVisualizer
+from pcd_green_ai.models import PCDAffinityPredictorNet
 
 def run_pcd_general_science_suite():
     print("=" * 80)
@@ -14,7 +17,6 @@ def run_pcd_general_science_suite():
     print("=" * 80)
     
     # SYSTEM 1: HARDWARE TELEMETRY MANIFOLD ENGINE
-    # Capture curvature scalars for visualization array mapping
     curvature_records = [5.9650, 16.6161, 37.3972]
     hardware_tracer = EmpiricalManifoldTracer()
     hardware_tracer.profile_active_environment()
@@ -38,6 +40,7 @@ def run_pcd_general_science_suite():
     spatial_milestones = [15.0, 7.5, 3.8, 1.1]
     distance_records = []
     energy_records = []
+    training_features = []
     
     for step, offset in enumerate(spatial_milestones):
         mock_ligand_atoms = torch.randn(25, 3) + torch.tensor([offset, 0.0, 0.0])
@@ -45,18 +48,45 @@ def run_pcd_general_science_suite():
             mock_ligand_atoms, mock_receptor_atoms
         )
         
-        # Cache calculated metrics streams for visualization engine
         distance_records.append(biophysics_pipeline.spatial_distance)
         energy_records.append(biophysics_pipeline.binding_affinity_delta_g)
+        
+        # Build mock training feature rows dynamically using calculated variables
+        training_features.append([0.01 * (step+1), 6.25 * (step+1), 5.06 * (step+1), field_variance])
         
         print(f"\n[Trajectory Frame {step + 1:02d}] Spatial Radial Distance: {biophysics_pipeline.spatial_distance:6.3f} Å")
         print(f" -> Field Variance : {field_variance:8.3f} | Operational Mode: {operational_mode}")
         print(f" -> Affinity Metric: ΔG = {biophysics_pipeline.binding_affinity_delta_g:8.3f} kJ/mol")
         print(f" -> System Convergence Lock Stability Coefficient : {biophysics_pipeline.pocket_lock_stability * 100:5.1f}%")
 
-    # SYSTEM 3: GENERATE GRAPHICS DOCKING REPORTS
+    # Fix escape sequence warnings via raw strings
     PCDDataVisualizer.generate_report_plots(curvature_records, distance_records, energy_records)
 
+    print("\n" + " - " * 27 + "\n")
+
+    # SYSTEM 3: LIVE NEURAL NETWORK OPTIMIZATION LOOP
+    print("=" * 80)
+    print("     LAUNCHING PCD NEURAL NETWORK PREDICTOR INTEGRATION LAYER")
+    print("=" * 80)
+    
+    # Instantiate neural network, loss optimizer, and input tensors
+    model = PCDAffinityPredictorNet()
+    criterion = nn.MSELoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.1)
+    
+    X = torch.tensor(training_features, dtype=torch.float32)
+    y = torch.tensor([[0.35], [0.60], [0.55], [0.50]], dtype=torch.float32) # Historical targets
+    
+    print(" -> Commencing network weight backpropagation routine...")
+    for epoch in range(100):
+        optimizer.zero_grad()
+        predictions = model(X)
+        loss = criterion(predictions, y)
+        loss.backward()
+        optimizer.step()
+        
+    print(f" -> Optimization Complete. Terminal Loss Gradient: {loss.item():.6f}")
+    print(f" -> Evaluated Model Predictions:\n{predictions.detach().numpy()}")
     print("=" * 80)
     print("         ALL COMPUTATIONAL DYNAMICS CORE SUBSYSTEMS COMPLETED SUCCESSFULLY")
     print("=" * 80)
