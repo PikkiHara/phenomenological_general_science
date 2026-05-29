@@ -1,0 +1,1 @@
+# Phenomenological Computational Dynamics (PCD)\nUnified Green-AI Core and Biophysics Pipeline.\n
